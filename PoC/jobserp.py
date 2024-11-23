@@ -1,5 +1,6 @@
 from serpapi import GoogleSearch
 import json
+import csv
 import os
 from datetime import datetime
 import time
@@ -29,12 +30,6 @@ def extract_jobs_data(api_key, num_pages=3):
             search = GoogleSearch(params)
             results = search.get_dict()
             
-            # Debug print to see the structure (optional)
-            print(f"\nChecking response structure for page {current_page}:")
-            if 'serpapi_pagination' in results:
-                print("Pagination info found")
-                print("Next page token:", results.get('serpapi_pagination', {}).get('next_page_token', 'None'))
-            
             # Check if we have job results and it's not empty
             if 'jobs_results' not in results or not results['jobs_results']:
                 print(f"No more results found on page {current_page}")
@@ -46,17 +41,20 @@ def extract_jobs_data(api_key, num_pages=3):
             
             # Extract specific parameters from each job
             for job in jobs_on_this_page:
+                # Get all apply links if available
+                apply_links = []
+                if job.get('apply_options'):
+                    for option in job['apply_options']:
+                        if option.get('link'):
+                            apply_links.append(f"{option.get('title', 'Unknown')}: {option.get('link')}")
+                
                 job_data = {
                     'title': job.get('title', 'N/A'),
                     'company': job.get('company_name', 'N/A'),
                     'location': job.get('location', 'N/A'),
                     'description': job.get('description', 'N/A')[:500] + '...' if job.get('description') else 'N/A',
-                    'via': job.get('via', 'N/A'),
                     'posted_at': job.get('detected_extensions', {}).get('posted_at', 'N/A'),
-                    'schedule_type': job.get('detected_extensions', {}).get('schedule_type', 'N/A'),
-                    'salary': job.get('detected_extensions', {}).get('salary', 'N/A'),
-                    'benefits': [ext for ext in job.get('extensions', []) if 'insurance' in ext.lower() or 'benefit' in ext.lower()],
-                    'apply_link': job.get('apply_options', [{}])[0].get('link', 'N/A') if job.get('apply_options') else 'N/A'
+                    'apply_links': ' | '.join(apply_links) if apply_links else 'N/A'
                 }
                 all_jobs.append(job_data)
             
@@ -71,15 +69,34 @@ def extract_jobs_data(api_key, num_pages=3):
                 break
                 
             current_page += 1
-            
-            # Add a small delay between requests
-            time.sleep(2)
+            time.sleep(2)  # Small delay between requests
             
         except Exception as e:
             print(f"Error processing page {current_page}: {str(e)}")
             break
     
     return all_jobs
+
+def save_to_csv(jobs_data, filename='software_engineer_jobs.csv'):
+    """Save the extracted jobs data to a CSV file"""
+    # Define the fieldnames for the CSV
+    fieldnames = ['title', 'company', 'location', 'description', 'posted_at', 'apply_links']
+    
+    try:
+        with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+            
+            # Write the header
+            writer.writeheader()
+            
+            # Write the job data
+            for job in jobs_data:
+                writer.writerow(job)
+                
+        print(f"\nSuccessfully saved {len(jobs_data)} jobs to {filename}")
+        
+    except Exception as e:
+        print(f"Error saving to CSV: {str(e)}")
 
 def save_to_json(jobs_data, filename='software_engineer_jobs.json'):
     """Save the extracted jobs data to a JSON file"""
@@ -89,42 +106,34 @@ def save_to_json(jobs_data, filename='software_engineer_jobs.json'):
 
 def main():
     # Your SerpApi key
-    API_KEY = "73565b3ac23767a39bca23cd60d7e6f29085e8e4ca32c71bcf5f799a59d3d8c6"
+    API_KEY = "your key"
     
     try:
         # Extract jobs data
         print("Starting job extraction...")
-        jobs_data = extract_jobs_data(API_KEY, num_pages=3)  # Explicitly requesting 3 pages
+        jobs_data = extract_jobs_data(API_KEY, num_pages=3)
         
         if not jobs_data:
             print("No jobs were found!")
             return
             
-        # Save to JSON file
+        # Save to both JSON and CSV
         save_to_json(jobs_data)
+        save_to_csv(jobs_data)
         
         # Print summary
         print(f"\nExtraction completed successfully!")
         print(f"Total jobs extracted: {len(jobs_data)}")
         
-        # Print sample of first job and last job to verify pagination
+        # Print sample of first job
         if jobs_data:
-            print("\nFirst job entry:")
+            print("\nSample of first job entry:")
             first_job = jobs_data[0]
             for key, value in first_job.items():
                 if key == 'description':
                     print(f"{key}: {value[:150]}...")
                 else:
                     print(f"{key}: {value}")
-                    
-            if len(jobs_data) > 1:
-                print("\nLast job entry:")
-                last_job = jobs_data[-1]
-                for key, value in last_job.items():
-                    if key == 'description':
-                        print(f"{key}: {value[:150]}...")
-                    else:
-                        print(f"{key}: {value}")
     
     except Exception as e:
         print(f"An error occurred: {str(e)}")
