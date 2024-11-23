@@ -161,7 +161,7 @@ def save_to_json(jobs_data, filename='tech_jobs.json'):
     print(f"\nSaved {len(jobs_data)} jobs to {filename}")
 
 def main():
-    API_KEY = "73565b3ac23767a39bca23cd60d7e6f29085e8e4ca32c71bcf5f799a59d3d8c6"
+    API_KEY = "your key"
     
     job_titles = [
         'software engineer',
