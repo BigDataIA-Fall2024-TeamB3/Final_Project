@@ -51,7 +51,7 @@ graph TD
 
         H --> OO[View Saved Jobs from Snowflake Saved Jobs DB]
         OO --> FF[Set Job Status as Applied]
-        OO --> GG[Check Relevance with Profile and save the feedback Job Details in Snowflake Results DB]
+        OO --> GG[Check Relevance with Profile and save the feedback and Job Details in Snowflake Results DB]
 
         L --> P[Check Selected Job Relevance with Profile]
         P --> PQ[Sends Job description Along with Resume and Cover Letter to OpenAI for Structured Feedaback]
