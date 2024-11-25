@@ -68,5 +68,5 @@ graph TD
 ## Links
 
 1. **Codelabs Report**: [View Report](https://codelabs-preview.appspot.com/?file_id=1JGeUAieHgwrS8Kxsetu1_HHAeJsj8REv8EMC-kxBqW0#0)
-2. **Proposal Video**: [Watch Video](https://drive.google.com/file/d/1ZTxtyVhNEEwmCC3hwdfxsJBteny_4MPQ/view)
+2. **Proposal Video**: [Watch Video](https://drive.google.com/drive/folders/1DHzRlApDj-2Uo6RVT5viC4lYyjXmdB3s?usp=sharing)
 
