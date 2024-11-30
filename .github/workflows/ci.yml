@@ -1,4 +1,4 @@
-name: Tests for CI 
+name: Tests for CI
 
 on:
   pull_request:
@@ -18,7 +18,7 @@ jobs:
     - name: Set Up Python Environment
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.10'
 
     # Step 3: Install Project Dependencies
     - name: Install Project Dependencies
@@ -27,12 +27,12 @@ jobs:
         pip install poetry
         poetry install
 
-    # Step 4: Execute Unit Tests
-    - name: Execute Unit Tests
+    # Step 4: Add Poetry Virtual Environment to PATH
+    - name: Add Poetry Virtual Environment to PATH
       run: |
-        pytest tests/test_unit.py
+        echo "$(poetry env info --path)/bin" >> $GITHUB_PATH
 
-    # Step 5: Execute Integration Tests
-    - name: Execute Integration Tests
+    # Step 5: Run All Tests
+    - name: Run All Tests
       run: |
-        pytest tests/test_integration.py
+        pytest tests/
