@@ -1,0 +1,40 @@
+# Use Apache Airflow as base image
+FROM apache/airflow:2.10.2
+
+# Switch to root to install system dependencies
+USER root
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    unzip \
+    libffi-dev \
+    libssl-dev \
+    zlib1g-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Switch to airflow user for Python package installation
+USER airflow
+
+# Install Python dependencies for job scraping and Snowflake
+RUN pip install --no-cache-dir \
+    google-search-results \
+    pandas \
+    snowflake-connector-python \
+    python-dotenv \
+    requests \
+    tqdm
+
+# Switch back to root for any additional system configurations
+USER root
+
+# Create necessary directories with appropriate permissions
+RUN mkdir -p /opt/airflow/data && \
+    chown -R airflow:root /opt/airflow/data
+
+# Switch back to airflow user for running the application
+USER airflow
+
+# Set Python to run in unbuffered mode
+ENV PYTHONUNBUFFERED=1
