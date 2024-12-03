@@ -72,7 +72,20 @@ def calculate_posted_date(posted_at):
     
     return posted_date.strftime('%Y-%m-%d')
 
-def extract_jobs_for_title(api_key, job_title, num_pages=5):
+def format_job_highlights(highlights):
+    """Format job highlights into a structured string"""
+    if not highlights:
+        return 'N/A'
+    
+    formatted = []
+    for section in highlights:
+        title = section.get('title', 'N/A')
+        items = section.get('items', [])
+        formatted.append(f"{title}:\n" + "\n".join(f"- {item}" for item in items))
+    
+    return "\n\n".join(formatted)
+
+def extract_jobs_for_title(api_key, job_title, num_pages=30):
     all_jobs = []
     current_page = 1
     next_page_token = None
@@ -111,13 +124,17 @@ def extract_jobs_for_title(api_key, job_title, num_pages=5):
                 posted_at = job.get('detected_extensions', {}).get('posted_at', 'N/A')
                 posted_date = calculate_posted_date(posted_at)
                 
+                # Format job highlights
+                job_highlights = format_job_highlights(job.get('job_highlights', []))
+                
                 job_data = {
-                	'job_id': str(uuid.uuid4()),
+                    'job_id': str(uuid.uuid4()),
                     'search_query': job_title,
                     'title': job.get('title', 'N/A'),
                     'company': job.get('company_name', 'N/A'),
                     'location': job.get('location', 'N/A'),
-                    'description': job.get('description', 'N/A')[:500] + '...' if job.get('description') else 'N/A',
+                    'description': job.get('description', 'N/A'),
+                    'job_highlights': job_highlights,
                     'posted_at': posted_at,
                     'posted_date': posted_date,
                     'apply_links': ' | '.join(apply_links) if apply_links else 'N/A'
@@ -144,7 +161,8 @@ def extract_jobs_for_title(api_key, job_title, num_pages=5):
 
 def save_to_csv(jobs_data, filename='tech_jobs.csv'):
     """Save the extracted jobs data to a CSV file"""
-    fieldnames = ['job_id', 'search_query', 'title', 'company', 'location', 'description', 'posted_at', 'posted_date', 'apply_links']
+    fieldnames = ['job_id', 'search_query', 'title', 'company', 'location', 
+                 'description', 'job_highlights', 'posted_at', 'posted_date', 'apply_links']
     
     try:
         with open(filename, 'w', newline='', encoding='utf-8') as csvfile:
@@ -168,6 +186,13 @@ def main():
     job_titles = [
         'software engineer',
         'data engineer',
+        'data scientist',
+        'machine learning engineer',
+        'AI Engineer',
+        'data analyst',
+        'AI/ML Engineer',
+        'DevOps Engineer',
+        'full stack engineer'
     ]
     
     try:
@@ -198,13 +223,9 @@ def main():
         
         # Print sample entry
         if all_jobs:
-            print("\nSample job entry with actual posted date:")
+            print("\nSample job entry:")
             first_job = all_jobs[0]
-            for key, value in first_job.items():
-                if key == 'description':
-                    print(f"{key}: {value[:150]}...")
-                else:
-                    print(f"{key}: {value}")
+            print(json.dumps(first_job, indent=2))
     
     except Exception as e:
         print(f"An error occurred: {str(e)}")
