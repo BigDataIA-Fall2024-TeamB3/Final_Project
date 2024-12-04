@@ -22,7 +22,7 @@ load_dotenv()
 SNOWFLAKE_ACCOUNT = os.getenv("SNOWFLAKE_ACCOUNT")
 SNOWFLAKE_USER = os.getenv("SNOWFLAKE_USER")
 SNOWFLAKE_PASSWORD = os.getenv("SNOWFLAKE_PASSWORD")
-SNOWFLAKE_DATABASE = os.getenv("SNOWFLAKE_DATABASE")
+SNOWFLAKE_USER_PROFILES_DB = os.getenv("SNOWFLAKE_USER_PROFILES_DB")
 SNOWFLAKE_SCHEMA = os.getenv("SNOWFLAKE_SCHEMA")
 SNOWFLAKE_WAREHOUSE = os.getenv("SNOWFLAKE_WAREHOUSE")
 
@@ -68,7 +68,7 @@ def get_snowflake_connection():
             user=SNOWFLAKE_USER,
             password=SNOWFLAKE_PASSWORD,
             account=SNOWFLAKE_ACCOUNT,
-            database=SNOWFLAKE_DATABASE,
+            database=SNOWFLAKE_USER_PROFILES_DB,
             schema=SNOWFLAKE_SCHEMA,
             warehouse=SNOWFLAKE_WAREHOUSE,
         )
@@ -464,3 +464,239 @@ async def update_user_files(
             cur.close()
         if "conn" in locals() and conn:
             conn.close()
+
+
+from typing import TypedDict, List, Dict, Any
+from langgraph.graph import StateGraph
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+import pandas as pd
+import snowflake.connector
+import ast
+
+# Load environment variables from a .env file
+load_dotenv()
+
+# Retrieve Snowflake connection details from environment variables
+account = os.getenv('SNOWFLAKE_ACCOUNT')
+user = os.getenv('SNOWFLAKE_USER')
+password = os.getenv('SNOWFLAKE_PASSWORD')
+database = os.getenv('SNOWFLAKE_JOBSDB')
+schema = os.getenv('SNOWFLAKE_SCHEMA')
+warehouse = os.getenv('SNOWFLAKE_WAREHOUSE')
+
+# Pydantic models for request/response
+class JobSearchResponse(BaseModel):
+    status: str
+    data: List[Dict[str, Any]]
+    parsed_query: Dict[str, List[str]]
+    sql: str
+
+class ErrorResponse(BaseModel):
+    status: str
+    message: str
+    parsed_query: Dict[str, List[str]]
+
+
+# TypedDict for Agent State
+class AgentState(TypedDict):
+    natural_query: str
+    parsed_query: Dict[str, List[str]]
+    sql: str
+    results: str
+    final_output: str
+
+    # Initialize LLM
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+
+def parse_natural_query(state: AgentState) -> AgentState:
+    parser_prompt = ChatPromptTemplate.from_messages([
+        ("system", """You are an expert at parsing job search queries. Extract the column names 
+        and their corresponding values based on the following schema map:
+        {{
+            "role": "SEARCH_QUERY",
+            "job": "SEARCH_QUERY",
+            "title": "TITLE",
+            "company": "COMPANY",
+            "location": "LOCATION",
+            "description": "DESCRIPTION",
+            "posted_date": "POSTED_DATE"
+        }}
+
+        Include relevant synonyms for each value from this synonym map:
+        {{
+            "SEARCH_QUERY": {{
+                "data": [
+                    "data", "data engineer", "data scientist", 
+                    "data analyst", "data specialist", "data science", 
+                    "data engineering", "data analytics"
+                ],
+                "data engineer": ["data engineer", "data engineering"],
+                "data scientist": ["data scientist", "data science", "machine learning scientist"],
+                "AI engineer": ["AI engineer", "artificial intelligence engineer"],
+                "machine learning engineer": ["machine learning engineer", "ML engineer"],
+                "data analyst": ["data analyst", "data analytics"],
+                "AI/ML engineer": ["AI/ML engineer", "artificial intelligence/machine learning engineer"],
+                "software engineer": ["software engineer", "software developer", "software programming"],
+                "devops engineer": ["devops engineer", "site reliability engineer", "SRE"],
+                "full stack engineer": ["full stack engineer", "full stack developer", "front end and back end developer"]
+            }}
+        }}
+
+        Return a valid Python dictionary where:
+        - Keys are column names from the schema map.
+        - Values are lists of terms to search for, including synonyms.
+        Format the output as valid Python syntax with no extra text or code blocks.
+        Example: {{'column_name': ['value1', 'value2']}}"""),
+        ("user", "Parse this job search query: {natural_query}")
+    ])
+    
+    chain = parser_prompt | llm
+    response = chain.invoke({
+        "natural_query": state["natural_query"]
+    })
+    
+    try:
+        content = response.content if hasattr(response, 'content') else response
+        print(f"Raw LLM response: {content}")
+        
+        sanitized_response = content.strip("```python").strip("```").strip()
+        parsed = ast.literal_eval(sanitized_response)
+        
+        if isinstance(parsed, dict) and all(isinstance(v, list) for v in parsed.values()):
+            state["parsed_query"] = parsed
+        else:
+            raise ValueError("Parsed query does not return valid lists of terms.")
+    except Exception as e:
+        state["parsed_query"] = {"error": f"Parsing error: {str(e)}"}
+    
+    print(f"Parsed query: {state['parsed_query']}")
+    return state
+
+
+def write_sql_query(state: AgentState) -> AgentState:
+    conditions = []
+    schema_to_table_map = {
+        "role": "SEARCH_QUERY",
+        "job": "SEARCH_QUERY",
+        "title": "TITLE",
+        "company": "COMPANY",
+        "location": "LOCATION",
+        "description": "DESCRIPTION",
+        "posted_date": "POSTED_DATE"
+    }
+    
+    # Consolidate and deduplicate conditions for fields mapping to the same column
+    column_conditions = {}
+    for schema_field, table_column in schema_to_table_map.items():
+        terms = state["parsed_query"].get(schema_field, [])
+        if terms:  # Only add conditions for non-empty terms
+            if table_column not in column_conditions:
+                column_conditions[table_column] = set()  # Use a set to avoid duplicates
+            column_conditions[table_column].update(terms)  # Add terms to the set
+
+    # Generate SQL WHERE clause
+    for table_column, terms in column_conditions.items():
+        if terms:  # Avoid empty conditions
+            term_conditions = [f"{table_column} ILIKE '%{term}%'" for term in sorted(terms)]
+            conditions.append(f"({' OR '.join(term_conditions)})")
+    
+    if conditions:
+        where_clause = " AND ".join(conditions)
+        sql_query = f"SELECT * FROM JOBLISTINGS WHERE {where_clause}"
+    else:
+        sql_query = "SELECT * FROM JOBLISTINGS"  # Default query if no conditions
+    
+    state["sql"] = sql_query
+    print(f"Generated SQL: {state['sql']}")
+    return state
+
+# Execute Query
+def execute_query(state: AgentState) -> AgentState:
+    try:
+        conn = snowflake.connector.connect(
+            account=account,
+            user=user,
+            password=password,
+            database=database,
+            schema=schema,
+            warehouse=warehouse
+        )
+        cursor = conn.cursor()
+        cursor.execute(state["sql"])
+        columns = [col[0] for col in cursor.description]
+        results = cursor.fetchall()
+        state["results"] = pd.DataFrame(results, columns=columns)
+        cursor.close()
+        conn.close()
+    except Exception as e:
+        state["results"] = f"Error: {str(e)}"
+    return state
+
+# Format Output
+def format_output(state: AgentState) -> AgentState:
+    if isinstance(state["results"], pd.DataFrame):
+        state["final_output"] = {
+            "status": "success",
+            "parsed_query": state["parsed_query"],
+            "data": state["results"].to_dict(orient="records"),
+            "sql": state["sql"]
+        }
+    else:
+        state["final_output"] = {
+            "status": "error",
+            "message": "No results found or error in query.",
+            "parsed_query": state["parsed_query"]
+        }
+    return state
+
+
+# Create Workflow
+def create_workflow():
+    workflow = StateGraph(AgentState)
+    
+    # Add nodes
+    workflow.add_node("parse_query", parse_natural_query)
+    workflow.add_node("write_query", write_sql_query)
+    workflow.add_node("execute_query", execute_query)
+    workflow.add_node("format_output", format_output)
+    
+    # Add edges
+    workflow.add_edge("parse_query", "write_query")
+    workflow.add_edge("write_query", "execute_query")
+    workflow.add_edge("execute_query", "format_output")
+    
+    workflow.set_entry_point("parse_query")
+    workflow.set_finish_point("format_output")
+    
+    return workflow.compile()
+
+# Add this to your existing endpoint
+@app.get("/search/jobs", response_model=JobSearchResponse)
+async def search_job_listings(
+    query: str,
+    current_user: UserOut = Depends(get_current_user)
+):
+    try:
+        graph = create_workflow()
+        initial_state = {
+            "natural_query": query,
+            "parsed_query": {},
+            "sql": "",
+            "results": "",
+            "final_output": ""
+        }
+        result = graph.invoke(initial_state)
+        
+        if result["final_output"]["status"] == "error":
+            raise HTTPException(
+                status_code=400,
+                detail=result["final_output"]["message"]
+            )
+            
+        return result["final_output"]
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Internal server error: {str(e)}"
+        )
