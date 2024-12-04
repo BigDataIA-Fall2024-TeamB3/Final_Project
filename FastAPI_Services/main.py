@@ -35,6 +35,11 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = os.getenv("ALGORITHM", "HS256")
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES"))
 
+import os
+
+if "OPENAI_API_KEY" not in os.environ:
+    raise ValueError("The OPENAI_API_KEY environment variable must be set.")
+
 # Initialize AWS S3 client
 s3_client = boto3.client(
     "s3",
