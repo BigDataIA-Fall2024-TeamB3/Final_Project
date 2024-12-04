@@ -137,7 +137,7 @@ def extract_jobs_for_title(api_key, job_title, num_pages=30):
                     'job_highlights': job_highlights,
                     'posted_at': posted_at,
                     'posted_date': posted_date,
-                    'apply_links': ' | '.join(apply_links) if apply_links else 'N/A'
+                    'apply_links': '\n'.join(apply_links) if apply_links else 'N/A'  # Changed from ' | ' to '\n'
                 }
                 all_jobs.append(job_data)
             

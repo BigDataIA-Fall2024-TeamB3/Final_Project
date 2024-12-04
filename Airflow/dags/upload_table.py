@@ -21,14 +21,14 @@ def update_snowflake_from_csv(csv_file='tech_jobs.csv'):
         snowflake_warehouse = os.getenv('SNOWFLAKE_WAREHOUSE')
         snowflake_database = os.getenv('SNOWFLAKE_JOBS_DATABASE')
         snowflake_schema = os.getenv('SNOWFLAKE_SCHEMA')
-        snowflake_role = os.getenv('SNOWFLAKE_ROLE')
-        #snowflake_role = 'ACCOUNTADMIN'
+        #snowflake_role = os.getenv('SNOWFLAKE_ROLE')
+        snowflake_role = 'ACCOUNTADMIN'
         
         # Verify all required environment variables are present
         required_vars = [
             'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD', 'SNOWFLAKE_ACCOUNT',
-            'SNOWFLAKE_WAREHOUSE', 'SNOWFLAKE_JOBS_DATABASE', 'SNOWFLAKE_SCHEMA',
-            'SNOWFLAKE_ROLE'
+            'SNOWFLAKE_WAREHOUSE', 'SNOWFLAKE_JOBS_DATABASE', 'SNOWFLAKE_SCHEMA'
+            #,'SNOWFLAKE_ROLE'
         ]
         
         missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -100,7 +100,8 @@ def update_snowflake_from_csv(csv_file='tech_jobs.csv'):
             
             # First, delete all existing data
             print("Deleting existing data from Snowflake table...")
-            delete_query = f"DELETE FROM {snowflake_database}.{snowflake_schema}.TESTJOBSDB"
+            #delete_query = f"DELETE FROM {snowflake_database}.{snowflake_schema}.TESTJOBSDB"
+            delete_query = f"DELETE FROM {snowflake_database}.{snowflake_schema}.JOBLISTINGS"
             cursor.execute(delete_query)
             
             # Get count of deleted rows
@@ -112,7 +113,8 @@ def update_snowflake_from_csv(csv_file='tech_jobs.csv'):
             success, nchunks, nrows, output = write_pandas(
                 conn=conn,
                 df=df,
-                table_name='TESTJOBSDB',
+                #table_name='TESTJOBSDB',
+                table_name='JOBLISTINGS',
                 database=snowflake_database,
                 schema=snowflake_schema,
                 quote_identifiers=False
@@ -122,7 +124,8 @@ def update_snowflake_from_csv(csv_file='tech_jobs.csv'):
                 print(f"Successfully uploaded {nrows} rows in {nchunks} chunks to Snowflake")
                 
                 # Verify the upload by counting rows
-                cursor.execute(f"SELECT COUNT(*) FROM {snowflake_database}.{snowflake_schema}.TESTJOBSDB")
+                #cursor.execute(f"SELECT COUNT(*) FROM {snowflake_database}.{snowflake_schema}.TESTJOBSDB")
+                cursor.execute(f"SELECT COUNT(*) FROM {snowflake_database}.{snowflake_schema}.JOBLISTINGS")
                 final_count = cursor.fetchone()[0]
                 print(f"Final row count in Snowflake table: {final_count}")
                 

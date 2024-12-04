@@ -48,7 +48,7 @@ def scrape_and_save_jobs():
         
         for job_title in job_titles:
             print(f"\nSearching for {job_title} positions...")
-            jobs = extract_jobs_for_title(API_KEY, job_title, 2)
+            jobs = extract_jobs_for_title(API_KEY, job_title, 30)
             all_jobs.extend(jobs)
             print(f"Found {len(jobs)} {job_title} positions")
         
