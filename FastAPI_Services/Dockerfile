@@ -1,15 +1,19 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12
+FROM python:3.12.7
+
+# Install Poetry
+RUN pip install --no-cache-dir poetry
 
 # Set the working directory in the container to /app
 WORKDIR /app
 
-# Copy the Fast_API directory and requirements.txt from the root context
-COPY ./Fast_API /app
-COPY ./requirements.txt /app
+# Copy the FastAPI directory and Poetry files from the root context
+COPY ./FastAPI_Services /app
+COPY ./poetry.lock /app
+COPY ./pyproject.toml /app
 
-# Install any dependencies specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies using Poetry
+RUN poetry config virtualenvs.create false && poetry install --no-root --no-cache
 
 # Expose port 8000 for FastAPI
 EXPOSE 8000

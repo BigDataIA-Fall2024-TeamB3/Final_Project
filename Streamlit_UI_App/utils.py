@@ -1,7 +1,8 @@
 import streamlit as st
 import requests
+import os
 
-API_BASE_URL = "http://localhost:8000"  # Replace with your actual API base URL
+API_BASE_URL = os.getenv("API_URL", "http://localhost:8000")
 
 def register_user(username, email, password, resume_file, cover_letter_file):
     url = f"{API_BASE_URL}/register"
