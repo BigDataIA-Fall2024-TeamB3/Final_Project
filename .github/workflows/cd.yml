@@ -34,6 +34,8 @@ jobs:
     - name: Cleanup old deployment
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcp_key ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_INSTANCE_IP }} << 'EOF'
+          cd ~/final_project
+          sudo docker-compose down
           sudo docker rm streamlit_container fastapi_container || true
           sudo docker rmi final_project-streamlit final_project-fastapi || true
           rm -rf ~/final_project
