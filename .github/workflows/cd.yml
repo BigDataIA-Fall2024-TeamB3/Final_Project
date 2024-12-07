@@ -22,6 +22,15 @@ jobs:
         echo "${{ secrets.GCP_SSH_KEY }}" > ~/.ssh/gcp_key
         chmod 600 ~/.ssh/gcp_key
 
+    - name: Install Docker and Docker Compose on GCP
+      run: |
+        ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcp_key ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_INSTANCE_IP }} << 'EOF'
+          sudo apt update
+          sudo apt install -y docker.io
+          sudo curl -L "https://github.com/docker/compose/releases/download/v2.21.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+        EOF
+
     - name: Cleanup old deployment
       run: |
         ssh -o StrictHostKeyChecking=no -i ~/.ssh/gcp_key ${{ secrets.GCP_SSH_USER }}@${{ secrets.GCP_INSTANCE_IP }} << 'EOF'
