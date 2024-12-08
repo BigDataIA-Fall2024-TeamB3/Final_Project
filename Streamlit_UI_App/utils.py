@@ -52,3 +52,28 @@ def update_files(resume_file, cover_letter_file, token):
         files['cover_letter'] = cover_letter_file
     response = requests.put(url, headers=headers, files=files)
     return response
+
+def save_job(job, token):
+    url = f"{API_BASE_URL}/jobs/save"
+    headers = {'Authorization': f'Bearer {token}'}
+    response = requests.post(url, data=job, headers=headers)
+    return response
+
+def get_saved_jobs(token):
+    url = f"{API_BASE_URL}/jobs/saved"
+    headers = {'Authorization': f'Bearer {token}'}
+    response = requests.get(url, headers=headers)
+    return response
+
+def update_job_status(job_id, new_status, token):
+    url = f"{API_BASE_URL}/jobs/update-status"
+    headers = {'Authorization': f'Bearer {token}'}
+    data = {'job_id': job_id, 'new_status': new_status}
+    response = requests.put(url, headers=headers, data=data)
+    return response
+
+def delete_saved_job(job_id, token):
+    url = f"{API_BASE_URL}/jobs/{job_id}"
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.delete(url, headers=headers)
+    return response
