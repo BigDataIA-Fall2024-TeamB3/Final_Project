@@ -705,3 +705,227 @@ async def search_job_listings(
             status_code=500,
             detail=f"Internal server error: {str(e)}"
         )
+    
+# Snowflake connection function for USER_RESULTS_DB
+def get_user_results_db_connection():
+    try:
+        return connect(
+            user=os.getenv("SNOWFLAKE_USER"),
+            password=os.getenv("SNOWFLAKE_PASSWORD"),
+            account=os.getenv("SNOWFLAKE_ACCOUNT"),
+            database=os.getenv("SNOWFLAKE_USER_RESULTS_DB"),
+            schema=os.getenv("SNOWFLAKE_SCHEMA"),
+            warehouse=os.getenv("SNOWFLAKE_WAREHOUSE"),
+        )
+    except ProgrammingError as e:
+        raise HTTPException(status_code=500, detail=f"Snowflake connection error for USER_RESULTS_DB: {e}")
+    
+@app.post("/jobs/save")
+async def save_job(
+    job_id: str = Form(...),
+    title: str = Form(None),
+    company: str = Form(None),
+    location: str = Form(None),
+    description: str = Form(None),
+    job_highlights: str = Form(None),
+    apply_links: str = Form(None),
+    posted_date: str = Form(None),
+    status: str = Form("Not Applied"),
+    current_user: UserOut = Depends(get_current_user)
+):
+    """
+    Save job details for the logged-in user.
+    Creates a new table for the user based on their UUID if it does not already exist.
+    """
+    try:
+        conn = get_user_results_db_connection()
+        cur = conn.cursor()
+
+        # Ensure the UUID is converted to a string before replacing characters
+        table_name = f"user_{str(current_user.id).replace('-', '_')}"
+
+        # Create table if it doesn't exist
+        create_table_query = f"""
+        CREATE TABLE IF NOT EXISTS {table_name} (
+            job_id STRING NOT NULL,                -- Unique Job ID
+            title STRING,                          -- Job title
+            company STRING,                        -- Company name
+            location STRING,                       -- Job location
+            description TEXT,                      -- Job description
+            job_highlights TEXT,                   -- Job highlights
+            apply_links STRING,                    -- Application link
+            posted_date STRING,                    -- Job posting date
+            status STRING DEFAULT 'Not Applied',   -- Application status
+            feedback TEXT,                         -- Feedback on the application
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- Creation timestamp
+            updated_at TIMESTAMP,                  -- Update timestamp
+            PRIMARY KEY (job_id)                   -- Primary key for unique jobs
+        );
+        """
+        cur.execute(create_table_query)
+
+        # Use a MERGE statement for upserting
+        merge_query = f"""
+        MERGE INTO {table_name} AS target
+        USING (SELECT
+            %(job_id)s AS job_id,
+            %(title)s AS title,
+            %(company)s AS company,
+            %(location)s AS location,
+            %(description)s AS description,
+            %(job_highlights)s AS job_highlights,
+            %(apply_links)s AS apply_links,
+            %(posted_date)s AS posted_date,
+            %(status)s AS status,
+            CURRENT_TIMESTAMP AS updated_at
+        ) AS source
+        ON target.job_id = source.job_id
+        WHEN MATCHED THEN UPDATE SET
+            title = source.title,
+            company = source.company,
+            location = source.location,
+            description = source.description,
+            job_highlights = source.job_highlights,
+            apply_links = source.apply_links,
+            posted_date = source.posted_date,
+            status = source.status,
+            updated_at = source.updated_at
+        WHEN NOT MATCHED THEN INSERT (
+            job_id, title, company, location, description, 
+            job_highlights, apply_links, posted_date, status, created_at, updated_at
+        )
+        VALUES (
+            source.job_id, source.title, source.company, source.location, source.description,
+            source.job_highlights, source.apply_links, source.posted_date, source.status, CURRENT_TIMESTAMP, NULL
+        );
+        """
+        params = {
+            'job_id': job_id,
+            'title': title,
+            'company': company,
+            'location': location,
+            'description': description,
+            'job_highlights': job_highlights,
+            'apply_links': apply_links,
+            'posted_date': posted_date,
+            'status': status
+        }
+
+        cur.execute(merge_query, params)
+        conn.commit()
+
+        return {"message": f"Job saved successfully in table '{table_name}'."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving job: {e}")
+    finally:
+        if "cur" in locals() and cur:
+            cur.close()
+        if "conn" in locals() and conn:
+            conn.close()
+
+@app.get("/jobs/saved", response_model=list)
+async def get_saved_jobs(current_user: UserOut = Depends(get_current_user)):
+    """
+    Fetch all saved jobs for the logged-in user.
+    """
+    try:
+        conn = get_user_results_db_connection()
+        cur = conn.cursor()
+
+        # Dynamically generate the table name
+        table_name = f"user_{str(current_user.id).replace('-', '_')}"
+
+        # Query to fetch all jobs
+        fetch_jobs_query = f"SELECT * FROM {table_name};"
+        cur.execute(fetch_jobs_query)
+        columns = [col[0] for col in cur.description]  # Get column names
+        rows = cur.fetchall()
+
+        # Format results as a list of dictionaries
+        saved_jobs = [dict(zip(columns, row)) for row in rows]
+
+        return saved_jobs
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching saved jobs: {e}")
+    finally:
+        if "cur" in locals() and cur:
+            cur.close()
+        if "conn" in locals() and conn:
+            conn.close()
+
+@app.put("/jobs/update-status")
+async def update_job_status(
+    job_id: str = Form(...),
+    new_status: str = Form(...),
+    current_user: UserOut = Depends(get_current_user)
+):
+    """
+    Update the status of a saved job for the logged-in user.
+    """
+    try:
+        conn = get_user_results_db_connection()
+        cur = conn.cursor() 
+
+        # Dynamically generate the table name
+        table_name = f"user_{str(current_user.id).replace('-', '_')}"
+
+        # Update query
+        update_query = f"""
+        UPDATE {table_name}
+        SET status = %(new_status)s, updated_at = CURRENT_TIMESTAMP
+        WHERE job_id = %(job_id)s;
+        """
+        params = {'job_id': job_id, 'new_status': new_status}
+        cur.execute(update_query, params)
+        conn.commit()
+
+        return {"message": "Job status updated successfully."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error updating job status: {e}")
+    finally:
+        if "cur" in locals() and cur:
+            cur.close()
+        if "conn" in locals() and conn:
+            conn.close()
+
+@app.delete("/jobs/{job_id}", response_model=dict)
+async def delete_job(job_id: str, current_user: UserOut = Depends(get_current_user)):
+    """
+    Endpoint to delete a saved job by job_id for the logged-in user.
+    """
+    try:
+        conn = get_user_results_db_connection()
+        cur = conn.cursor()
+
+        # Generate the user's table name dynamically based on their UUID
+        table_name = f"user_{str(current_user.id).replace('-', '_')}"  # Convert UUID to string first
+
+        # Check if the table exists
+        check_table_query = f"""
+        SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLES 
+        WHERE TABLE_NAME = '{table_name.upper()}' 
+        AND TABLE_SCHEMA = '{os.getenv("SNOWFLAKE_SCHEMA").upper()}';
+        """
+        cur.execute(check_table_query)
+        if cur.fetchone()[0] == 0:
+            raise HTTPException(status_code=404, detail="No saved jobs found for this user.")
+
+        # Delete the job
+        delete_query = f"DELETE FROM {table_name} WHERE job_id = %s"
+        cur.execute(delete_query, (job_id,))
+        conn.commit()
+
+        # Check if the job was deleted
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Job not found or already deleted.")
+
+        return {"message": "Job deleted successfully."}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    finally:
+        if "cur" in locals() and cur:
+            cur.close()
+        if "conn" in locals() and conn:
+            conn.close()
