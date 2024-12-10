@@ -1,5 +1,5 @@
 import streamlit as st
-from utils import get_saved_jobs, update_job_status, delete_saved_job
+from utils import get_saved_jobs, update_job_status, delete_saved_job, generate_feedback, save_feedback, chat_feedback
 
 st.set_page_config(page_title="Saved Jobs", layout="centered")
 
@@ -49,18 +49,14 @@ if 'access_token' not in st.session_state or st.session_state['access_token'] is
 if 'selected_saved_job_index' not in st.session_state:
     st.session_state['selected_saved_job_index'] = None
 
+# Logout function
 def logout():
-    """
-    Clear session state and log out the user.
-    """
     st.session_state['access_token'] = None
     st.session_state['selected_saved_job_index'] = None
     st.success("Logged out successfully!")
 
+# Fetch saved jobs
 def fetch_saved_jobs():
-    """
-    Fetch saved jobs from the backend using the access token.
-    """
     try:
         response = get_saved_jobs(st.session_state['access_token'])
         if response.status_code == 200:
@@ -80,9 +76,11 @@ def select_job(index):
 def go_back_to_list():
     st.session_state['selected_saved_job_index'] = None
 
+# Fetch the saved jobs
 saved_jobs = fetch_saved_jobs()
 
 if st.session_state['selected_saved_job_index'] is None:
+    # Display the list of saved jobs
     st.title("Saved Jobs")
     if saved_jobs:
         st.write(f"Found {len(saved_jobs)} saved job(s).")
@@ -104,59 +102,118 @@ if st.session_state['selected_saved_job_index'] is None:
     st.button("Logout", on_click=logout)
 
 else:
-    # Ensure the selected index is valid
     idx = st.session_state['selected_saved_job_index']
     if idx is not None and 0 <= idx < len(saved_jobs):
         selected_job = saved_jobs[idx]
-        st.title("Job Details")
-        st.write(f"**Job ID:** {selected_job.get('JOB_ID', 'Unknown')}")
-        st.write(f"**Title:** {selected_job.get('TITLE', 'No Title')}")
-        st.write(f"**Company:** {selected_job.get('COMPANY', 'Unknown')}")
-        st.write(f"**Location:** {selected_job.get('LOCATION', 'Unknown')}")
-        st.write(f"**Posted Date:** {selected_job.get('POSTED_DATE', 'Unknown')}")
-        st.write(f"**Status:** {selected_job.get('STATUS', 'Not Applied')}")
-        st.write(f"**Description:** {selected_job.get('DESCRIPTION', 'No Description')}")
-        st.write(f"**Highlights:** {selected_job.get('JOB_HIGHLIGHTS', 'Unknown')}")
-        st.write(f"**Feedback:** {selected_job.get('FEEDBACK', 'No Feedback Provided')}")
-        st.write(f"**Created At:** {selected_job.get('CREATED_AT', 'Unknown')}")
-        st.write(f"**Last Updated At:** {selected_job.get('UPDATED_AT', 'Not Updated')}")
-        st.write(f"**Application Link:** {selected_job.get('APPLY_LINKS', '#')}")
+        st.title(f"Job Details: {selected_job.get('TITLE', 'No Title')}")
 
-        # Option to update status
-        status_options = ["Not Applied", "Applied", "Interview Scheduled", "Offer Received", "Rejected"]
-        current_status = selected_job.get('STATUS', 'Not Applied')
-        if current_status not in status_options:
-            current_status = "Not Applied"
-        current_index = status_options.index(current_status)
+        # Tabs for different operations
+        tab1, tab2, tab3, tab4 = st.tabs(["Job Details", "Feedback", "Update Status", "Delete Job"])
 
-        new_status = st.selectbox("Update Status", status_options, index=current_index)
-        if st.button("Update Status"):
-            response = update_job_status(selected_job.get('JOB_ID'), new_status, st.session_state['access_token'])
-            if response.status_code == 200:
-                st.success(f"Status updated to '{new_status}' successfully!")
-                # After updating the status, re-fetch saved jobs and reset index
-                saved_jobs = fetch_saved_jobs()
-                st.session_state['selected_saved_job_index'] = None
-            else:
-                st.error(f"Failed to update status: {response.json().get('detail', 'Unknown error')}")
+        with tab1:
+            st.title("Job Details")
+            st.write(f"**Job ID:** {selected_job.get('JOB_ID', 'Unknown')}")
+            st.write(f"**Title:** {selected_job.get('TITLE', 'No Title')}")
+            st.write(f"**Company:** {selected_job.get('COMPANY', 'Unknown')}")
+            st.write(f"**Location:** {selected_job.get('LOCATION', 'Unknown')}")
+            st.write(f"**Posted Date:** {selected_job.get('POSTED_DATE', 'Unknown')}")
+            st.write(f"**Status:** {selected_job.get('STATUS', 'Not Applied')}")
+            st.write(f"**Description:** {selected_job.get('DESCRIPTION', 'No Description')}")
+            st.write(f"**Highlights:** {selected_job.get('JOB_HIGHLIGHTS', 'Unknown')}")
+            st.write(f"**Feedback:** {selected_job.get('FEEDBACK', 'Unknown')}")
+            st.write(f"**Apply Here:** {selected_job.get('APPLY_LINKS', 'Unknown')}")
+            st.write(f"**Created At:** {selected_job.get('CREATED_AT', 'Unknown')}")
+            st.write(f"**Updated At:** {selected_job.get('UPDATED_AT', 'Unknown')}")
 
-        # Option to delete the job
-        if st.button("Delete Job"):
-            response = delete_saved_job(selected_job.get('JOB_ID'), st.session_state['access_token'])
-            if response.status_code == 200:
-                st.success("Job deleted successfully!")
-                # Refresh the job list after deletion
-                saved_jobs = fetch_saved_jobs()
-                st.session_state['selected_saved_job_index'] = None
-            else:
-                st.error(f"Failed to delete job: {response.json().get('detail', 'Unknown error')}")
+        with tab2:
+            st.subheader("Feedback")
 
-        # Back button to return to the saved jobs list
+            # Generate general feedback
+            feedback = st.session_state.get("feedback", "")
+            feedback_button = st.button("Generate Feedback")
+            if feedback_button:
+                with st.spinner("Generating feedback..."):
+                    response = generate_feedback(
+                        job_id=selected_job.get('JOB_ID', 'Unknown'),
+                        description=selected_job.get('DESCRIPTION', ''),
+                        highlights=selected_job.get('JOB_HIGHLIGHTS', ''),
+                        token=st.session_state['access_token']
+                    )
+                    if response.status_code == 200:
+                        feedback = response.json().get('feedback', 'No feedback available.')
+                        st.session_state['feedback'] = feedback
+                        st.write(feedback)
+                    else:
+                        st.error(f"Failed to generate feedback: {response.json().get('detail', 'Unknown error')}")
+
+            if feedback:
+                if st.button("Save Feedback"):
+                    save_response = save_feedback(
+                        job_id=selected_job.get('JOB_ID', 'Unknown'),
+                        feedback=feedback,
+                        token=st.session_state['access_token']
+                    )
+                    if save_response.status_code == 200:
+                        st.success("Feedback saved successfully!")
+                    else:
+                        st.error(f"Failed to save feedback: {save_response.json().get('detail', 'Unknown error')}")
+
+            st.markdown("---")
+            st.subheader("Ask Specific Questions")
+
+            # User can choose document type
+            document_type = st.selectbox("Select Document", ["Resume", "Cover Letter"])
+            question = st.text_area("Ask a specific question")
+
+            if st.button("Get Specific Feedback"):
+                if not question.strip():
+                    st.error("Please enter a question.")
+                else:
+                    with st.spinner("Getting specific feedback..."):
+                        chat_response = chat_feedback(
+                            document_type=document_type.lower(),
+                            question=question,
+                            description=selected_job.get('DESCRIPTION', ''),
+                            highlights=selected_job.get('JOB_HIGHLIGHTS', ''),
+                            token=st.session_state['access_token']
+                        )
+                        if chat_response.status_code == 200:
+                            response_text = chat_response.json().get("response", "No response available.")
+                            st.write(response_text)
+                        else:
+                            st.error(f"Failed to get feedback: {chat_response.json().get('detail', 'Unknown error')}")
+
+        with tab3:
+            st.subheader("Update Status")
+            status_options = ["Not Applied", "Applied", "Interview Scheduled", "Offer Received", "Rejected"]
+            current_status = selected_job.get('STATUS', 'Not Applied')
+            if current_status not in status_options:
+                current_status = "Not Applied"
+            current_index = status_options.index(current_status)
+
+            new_status = st.selectbox("Update Status", status_options, index=current_index)
+            if st.button("Update Status"):
+                response = update_job_status(selected_job.get('JOB_ID'), new_status, st.session_state['access_token'])
+                if response.status_code == 200:
+                    st.success(f"Status updated to '{new_status}' successfully!")
+                    saved_jobs = fetch_saved_jobs()
+                    st.session_state['selected_saved_job_index'] = None
+                else:
+                    st.error(f"Failed to update status: {response.json().get('detail', 'Unknown error')}")
+
+        with tab4:
+            st.subheader("Delete Job")
+            if st.button("Delete Job"):
+                response = delete_saved_job(selected_job.get('JOB_ID'), st.session_state['access_token'])
+                if response.status_code == 200:
+                    st.success("Job deleted successfully!")
+                    saved_jobs = fetch_saved_jobs()
+                    st.session_state['selected_saved_job_index'] = None
+                else:
+                    st.error(f"Failed to delete job: {response.json().get('detail', 'Unknown error')}")
+
         st.button("Back to Saved Jobs", on_click=go_back_to_list)
-
-        # Logout button
         st.button("Logout", on_click=logout)
     else:
-        # Invalid index: reset and show the job list again
         st.session_state['selected_saved_job_index'] = None
         st.error("Selected job index is invalid. Please select a job again.")

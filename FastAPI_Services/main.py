@@ -14,6 +14,14 @@ from contextlib import asynccontextmanager
 import json
 from io import BytesIO
 
+from typing import TypedDict, List, Dict, Any
+from langgraph.graph import StateGraph
+from langchain_openai import ChatOpenAI
+from langchain.prompts import ChatPromptTemplate
+import pandas as pd
+import snowflake.connector
+import ast
+
 # Load environment variables
 load_dotenv()
 
@@ -470,18 +478,6 @@ async def update_user_files(
         if "conn" in locals() and conn:
             conn.close()
 
-
-from typing import TypedDict, List, Dict, Any
-from langgraph.graph import StateGraph
-from langchain_openai import ChatOpenAI
-from langchain.prompts import ChatPromptTemplate
-import pandas as pd
-import snowflake.connector
-import ast
-
-# Load environment variables from a .env file
-load_dotenv()
-
 # Retrieve Snowflake connection details from environment variables
 account = os.getenv('SNOWFLAKE_ACCOUNT')
 user = os.getenv('SNOWFLAKE_USER')
@@ -924,6 +920,210 @@ async def delete_job(job_id: str, current_user: UserOut = Depends(get_current_us
         raise e
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+    finally:
+        if "cur" in locals() and cur:
+            cur.close()
+        if "conn" in locals() and conn:
+            conn.close()
+
+import fitz 
+
+def extract_text_from_pdf(pdf_content: bytes) -> str:
+    text = ""
+    try:
+        with fitz.open(stream=pdf_content, filetype="pdf") as doc:
+            for page in doc:
+                text += page.get_text()
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error extracting text from PDF: {str(e)}")
+    return text
+
+import requests
+
+@app.post("/feedback")
+async def generate_feedback(
+    job_id: str,
+    description: str,
+    highlights: str,
+    current_user: UserOut = Depends(get_current_user),
+):
+    """
+    Generate detailed feedback for the user's resume and cover letter based on the job description and highlights.
+    """
+    try:
+        # Fetch the publicly accessible links for the resume and cover letter
+        resume_link = current_user.resume_link
+        cover_letter_link = current_user.cover_letter_link
+        if not resume_link or not cover_letter_link:
+            raise HTTPException(status_code=400, detail="Resume or cover letter not found.")
+
+        # Fetch the files from the public URLs
+        resume_response = requests.get(resume_link)
+        cover_letter_response = requests.get(cover_letter_link)
+
+        # Check for successful retrieval
+        if resume_response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to fetch resume from the provided URL.")
+        if cover_letter_response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to fetch cover letter from the provided URL.")
+
+        # Extract text from PDFs
+        resume_text = extract_text_from_pdf(resume_response.content)
+        cover_letter_text = extract_text_from_pdf(cover_letter_response.content)
+
+        # Debug: Log extracted content (optional, remove in production)
+        print("=== Extracted Resume Content ===")
+        print(resume_text)
+        print("\n=== Extracted Cover Letter Content ===")
+        print(cover_letter_text)
+
+        # Prepare context for the LLM
+        context = {
+            "job_description": description,
+            "job_highlights": highlights,
+            "resume_text": resume_text,
+            "cover_letter_text": cover_letter_text,
+        }
+
+        # Create a prompt template
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", "You are an expert career advisor."),
+            ("user", """
+                Job Description:
+                {job_description}
+
+                Job Highlights:
+                {job_highlights}
+
+                Candidate's Resume:
+                {resume_text}
+
+                Candidate's Cover Letter:
+                {cover_letter_text}
+
+                Provide detailed feedback on how the resume and cover letter align with the job description and highlights.
+                Suggest improvements for better alignment.
+            """),
+        ])
+
+        # Initialize LangChain LLM
+        chat_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+        response = chat_llm.invoke(prompt_template.format(**context))
+
+        return {"feedback": response.content}
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+    
+
+@app.post("/chat-feedback")
+async def chat_feedback(
+    document_type: str = Form(..., description="Type of document (resume or cover letter)"),
+    question: str = Form(..., description="User's specific question"),
+    description: str = Form(..., description="Job description for context"),
+    highlights: str = Form(..., description="Job highlights for context"),
+    current_user: UserOut = Depends(get_current_user),
+):
+    """
+    Generate feedback for a specific question based on the user's selected document.
+    """
+    try:
+        # Get public resume and cover letter links
+        if document_type == "resume":
+            document_link = current_user.resume_link
+        elif document_type == "cover_letter":
+            document_link = current_user.cover_letter_link
+        else:
+            raise HTTPException(status_code=400, detail="Invalid document type.")
+
+        if not document_link:
+            raise HTTPException(status_code=400, detail="Selected document not found.")
+
+        # Fetch the document content
+        document_response = requests.get(document_link)
+        if document_response.status_code != 200:
+            raise HTTPException(status_code=500, detail="Failed to fetch the document.")
+
+        document_text = extract_text_from_pdf(document_response.content)
+
+        # Prepare context for the LLM
+        context = {
+            "job_description": description,
+            "job_highlights": highlights,
+            "document_text": document_text,
+            "question": question,
+        }
+
+        # Prompt template
+        prompt_template = ChatPromptTemplate.from_messages([
+            ("system", "You are a career coach specializing in job applications."),
+            ("user", """
+                Job Description:
+                {job_description}
+
+                Job Highlights:
+                {job_highlights}
+
+                Selected Document Content:
+                {document_text}
+
+                Question:
+                {question}
+
+                Provide a detailed response to the question based on the document content and job information.
+            """),
+        ])
+
+        # Generate response using LangChain LLM
+        chat_llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+        response = chat_llm.invoke(prompt_template.format(**context))
+
+        return {"response": response.content}
+
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected error: {str(e)}")
+
+
+class SaveFeedbackRequest(BaseModel):
+    job_id: str
+    feedback: str
+
+@app.post("/jobs/save-feedback")
+async def save_feedback(
+    feedback_request: SaveFeedbackRequest,
+    current_user: UserOut = Depends(get_current_user),
+):
+    """
+    Save feedback to the logged-in user's saved jobs table.
+    """
+    try:
+        conn = get_user_results_db_connection()
+        cur = conn.cursor()
+
+        # Get the table name for the current user
+        table_name = f"user_{str(current_user.id).replace('-', '_')}"
+        
+        # Update the feedback for the specific job
+        update_query = f"""
+        UPDATE {table_name}
+        SET feedback = %(feedback)s, updated_at = CURRENT_TIMESTAMP
+        WHERE job_id = %(job_id)s
+        """
+        params = {
+            "job_id": feedback_request.job_id,
+            "feedback": feedback_request.feedback,
+        }
+        cur.execute(update_query, params)
+        conn.commit()
+
+        return {"message": "Feedback saved successfully."}
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error saving feedback: {str(e)}")
     finally:
         if "cur" in locals() and cur:
             cur.close()

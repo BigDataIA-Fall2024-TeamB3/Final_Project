@@ -77,3 +77,32 @@ def delete_saved_job(job_id, token):
     headers = {"Authorization": f"Bearer {token}"}
     response = requests.delete(url, headers=headers)
     return response
+
+def generate_feedback(job_id, description, highlights, token):
+    """
+    Call the /feedback endpoint to generate feedback.
+    """
+    url = f"{API_BASE_URL}/feedback"
+    headers = {"Authorization": f"Bearer {token}"}
+    params = {"job_id": job_id, "description": description, "highlights": highlights}
+    response = requests.post(url, headers=headers, params=params)
+    return response
+
+def chat_feedback(document_type, question, description, highlights, token):
+    url = f"{API_BASE_URL}/chat-feedback"
+    headers = {"Authorization": f"Bearer {token}"}
+    data = {
+        "document_type": document_type,
+        "question": question,
+        "description": description,
+        "highlights": highlights,
+    }
+    response = requests.post(url, headers=headers, data=data)
+    return response
+
+def save_feedback(job_id, feedback, token):
+    url = f"{API_BASE_URL}/jobs/save-feedback"
+    headers = {"Authorization": f"Bearer {token}"}
+    data = {"job_id": job_id, "feedback": feedback}
+    response = requests.post(url, headers=headers, json=data)
+    return response
