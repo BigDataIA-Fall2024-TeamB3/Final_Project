@@ -113,7 +113,7 @@ h1, h2, h3, h4 {
 /* Inputs */
 textarea, input {
     border: 1px solid #D1D5DB !important;
-    border-radius: 6px !important;
+    border-radius: 10px !important;
 }
 
 /* Separator */
@@ -207,7 +207,7 @@ else:
     if idx is not None and 0 <= idx < len(saved_jobs):
         selected_job = saved_jobs[idx]
         st.title(f"Job Details: {selected_job.get('TITLE', 'No Title')}")
-
+        st.markdown("---")
         # Tabs for different operations
         tab1, tab2, tab3, tab4 = st.tabs(["Job Details", "Feedback", "Update Status", "Delete Job"])
 
