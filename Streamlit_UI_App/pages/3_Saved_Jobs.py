@@ -128,7 +128,7 @@ hr {
     text-align: center;
     font-size: 0.9rem;
     margin-top: 2rem;
-    color: #000000;
+    color: 000000;
 }
 </style>
 """
@@ -180,6 +180,7 @@ saved_jobs = fetch_saved_jobs()
 if st.session_state['selected_saved_job_index'] is None:
     # Display the list of saved jobs
     st.title("Saved Jobs")
+    st.markdown("---")
     if saved_jobs:
         st.write(f"Found {len(saved_jobs)} saved job(s).")
         for i, job in enumerate(saved_jobs):
@@ -369,7 +370,6 @@ else:
         st.markdown("---")
         st.button("Back to Saved Jobs", on_click=go_back_to_list)
         st.button("Logout", on_click=logout)
-        st.markdown('<div class="footer">© 2024. All rights reserved.</div>', unsafe_allow_html=True)
     else:
         st.session_state['selected_saved_job_index'] = None
         st.error("Selected job index is invalid. Please select a job again.")

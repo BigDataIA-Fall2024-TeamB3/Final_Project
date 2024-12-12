@@ -4,20 +4,20 @@ from utils import update_files, get_current_user
 
 st.set_page_config(page_title="Application Materials", layout="centered")
 
-# Custom CSS for styling with all black text
+# Custom CSS for styling without text or font color modifications
 hide_streamlit_style = """
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 
 body {
-    background-color: #F9F9F9;
+    background-color: var(--primary-background-color);
     font-family: "Helvetica Neue", Arial, sans-serif;
-    color: #000000; /* Ensure all text is black */
+    margin: 0;
+    padding: 0;
 }
-
 section.main > div {
-    background: #FFFFFF;
+    background: var(--secondary-background-color);
     padding: 2rem;
     border-radius: 10px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
@@ -27,21 +27,17 @@ section.main > div {
     margin-right: auto;
 }
 
-h1, h2, h3 {
+/* Titles and headings */
+h1, h2, h3, h4 {
     font-weight: 600;
-    color: #000000;
-    margin-bottom: 1rem;
     text-align: center;
-}
-
-h2 {
-    margin-top: 2rem;
+    margin-bottom: 1rem;
+    color: 000000;
 }
 
 /* Info, success, error messages */
 .css-1m7wk2c, .element-container {
     border-radius: 6px !important;
-    color: #000000 !important;
 }
 
 /* Buttons styling */
@@ -66,7 +62,6 @@ h2 {
     border: 1px solid #D1D5DB !important;
     border-radius: 6px !important;
     font-size: 0.9rem;
-    color: #000000 !important;
 }
 
 /* PDF viewer section */
@@ -81,18 +76,11 @@ h2 {
 }
 .pdf-tile {
     flex: 1 1 300px;
-    background: #FAFAFA;
+    background: var(--secondary-background-color);
     border-radius: 8px;
     padding: 1rem;
     box-shadow: 0 1px 5px rgba(0,0,0,0.05);
     min-width: 300px;
-    color: #000000;
-}
-.pdf-tile h4 {
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-    text-align: left;
-    color: #000000;
 }
 .pdf-tile iframe {
     width: 100%;
@@ -122,7 +110,7 @@ if st.session_state['access_token'] is None:
     st.stop()
 
 st.title("Your Application Materials")
-
+st.markdown("---")
 user = get_current_user(st.session_state['access_token'])
 if not user:
     st.error("Could not fetch user details. Please log in again.")
@@ -130,7 +118,6 @@ if not user:
 
 def display_pdf_links(resume_link, cover_letter_link):
     timestamp = int(time.time())  # For cache-busting
-    st.write("Review your existing resume and cover letter before uploading updates.")
 
     pdf_tiles = []
     if resume_link:
