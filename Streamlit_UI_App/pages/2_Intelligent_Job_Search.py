@@ -49,9 +49,9 @@ body {
     .stButton button:hover {
         background: #1E40AF;
     }
-    input, textarea {
-        color: #000000 !important;
-    }
+    # input, textarea {
+    #     color: #000000 !important;
+    # }
 }
 
 /* Dark mode styles */
@@ -89,11 +89,11 @@ body {
     .stButton button:hover {
         background: #1E40AF;
     }
-    input, textarea {
-        color: #FFFFFF !important;
-        background: #333333 !important;
-        border: 1px solid #555555 !important;
-    }
+    # input, textarea {
+    #     color: #FFFFFF !important;
+    #     background: #333333 !important;
+    #     border: 1px solid #555555 !important;
+    # }
 }
 
 /* Common Styles (applied in both modes) */
@@ -199,7 +199,7 @@ st.title("Job Search")
 # Explanation for the Job Search page
 st.write(
     """
-    Use the search box above to find job listings that match your interests.  
+    Use the search box below to find job listings that match your interests.  
     Once you see the search results, you can explore the details of any job by clicking the "View Details" button and in the details page use "Save Job" button to save the job details.
     """
 )
