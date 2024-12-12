@@ -191,7 +191,7 @@ graph TD
 
 ---
 
-# Project Tree
+## Project Tree
 ```
 ├── Airflow
 │   ├── dags
@@ -266,13 +266,13 @@ graph TD
 ```
 
 ---
-# Instructions for Setting Up the Data Pipeline and Application Services Locally
+## Instructions for Setting Up the Data Pipeline and Application Services Locally
 
 ## Prerequisites
 Ensure the following tools are installed:
 - **Python 3.12.7**
 - **Poetry** for dependency management
-- **Docker** and **Docker Compose** for containerization
+- **Docker** and **Docker Compose** or the **Docker** desktop app for containerization
 
 ## Required Environment Variables
 Create a `.env` file in the root directory and populate it with the following keys:
