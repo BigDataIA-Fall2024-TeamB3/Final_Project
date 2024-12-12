@@ -32,7 +32,7 @@ Contribution:
 3. **Proposal Codelabs Report**: [View Report](https://codelabs-preview.appspot.com/?file_id=1JGeUAieHgwrS8Kxsetu1_HHAeJsj8REv8EMC-kxBqW0#0)
 4. **Proposal Video**: [Watch Video](https://drive.google.com/drive/folders/1DHzRlApDj-2Uo6RVT5viC4lYyjXmdB3s?usp=sharing)
 ---
-## Introduction
+# Introduction
 
 Navigating the competitive job market can be overwhelming, with candidates often struggling to identify relevant opportunities and optimize their application materials for specific roles. Traditional job boards provide limited options, while tailoring resumes and cover letters for individual job descriptions is time-consuming and subjective. This project introduces an intelligent system that expands job searches across multiple sources and provides actionable insights to improve profile optimization, enhancing job-seeking efficiency and success rates.
 
@@ -44,7 +44,7 @@ The **Intelligent Job Search Assistant** aims to simplify and enhance the job ap
 
 ---
 
-## Project Overview
+# Project Overview
 
 The **Intelligent Job Search Assistant** provides a comprehensive suite of features to support users throughout their job search journey:
 
@@ -57,7 +57,7 @@ The **Intelligent Job Search Assistant** provides a comprehensive suite of featu
 
 ---
 
-## Architecture
+# Architecture
 
 The project leverages a multi-layered architecture with the following technologies:
 - **Backend**: FastAPI for handling APIs and integrating with LLMs.
@@ -72,7 +72,7 @@ The project leverages a multi-layered architecture with the following technologi
 
 ---
 
-## Data and Application Workflow
+# Data and Application Workflow
 
 ```mermaid
 graph TD
@@ -116,7 +116,7 @@ graph TD
 
 ---
 
-## Methodology
+# Methodology
 
 ### Data Sources
 1. **Job Listings**:
@@ -164,7 +164,7 @@ graph TD
 
 ---
 
-## Outcomes and Benefits
+# Outcomes and Benefits
 
 ### Outcomes
 - **Job Aggregation**: Aggregate and display job listings from multiple sources, ensuring relevance based on user queries.
@@ -191,7 +191,7 @@ graph TD
 
 ---
 
-## Project Tree
+# Project Tree
 ```
 ├── Airflow
 │   ├── dags
@@ -266,7 +266,7 @@ graph TD
 ```
 
 ---
-## Instructions for Setting Up the Data Pipeline and Application Services Locally
+# Instructions for Setting Up the Data Pipeline and Application Services Locally
 
 ## Prerequisites
 Ensure the following tools are installed:
@@ -324,7 +324,7 @@ docker compose up
 ```
 ---
 
-# Running Streamlit and FastAPI Services Locally
+## Running Streamlit and FastAPI Services Locally
 
 Initialize Poetry
 ```
@@ -343,8 +343,10 @@ Run the FastAPI backend
 ```
 uvicorn FastAPI_Services.main:app --reload
 ```
+
 ---
-# Running Streamlit and FastAPI Services Using Docker Containers Locally
+
+##  Running Streamlit and FastAPI Services Using Docker Containers Locally
 From the root directory, build and start the Docker containers
 ```
 docker compose build --no-cache
