@@ -20,9 +20,9 @@
 WE ATTEST THAT WE HAVEN’T USED ANY OTHER STUDENTS’ WORK IN OUR
 PROJECT AND ABIDE BY THE POLICIES LISTED IN THE STUDENT HANDBOOK
 Contribution:
-- a. Viswanath Raju Indukuri: 33%
-- b. Snehal Shivaji Molavade: 33%
-- c. Sai Vivekanand Reddy Vangala: 33%
+- Viswanath Raju Indukuri: 33.3%
+- Snehal Shivaji Molavade: 33.3%
+- Sai Vivekanand Reddy Vangala: 33.3%
 
 ---
 
@@ -34,10 +34,8 @@ Contribution:
 ---
 ## Introduction
 
-### Background
 Navigating the competitive job market can be overwhelming, with candidates often struggling to identify relevant opportunities and optimize their application materials for specific roles. Traditional job boards provide limited options, while tailoring resumes and cover letters for individual job descriptions is time-consuming and subjective. This project introduces an intelligent system that expands job searches across multiple sources and provides actionable insights to improve profile optimization, enhancing job-seeking efficiency and success rates.
 
-### Objective
 The **Intelligent Job Search Assistant** aims to simplify and enhance the job application process by offering:
 
 - Access to the latest job opportunities aggregated from multiple sources via the Google SERP API.
@@ -325,9 +323,8 @@ docker compose build --no-cache
 docker compose up
 ```
 ---
-# Running Locally
 
-Set Up Streamlit and FastAPI services Locally
+# Running Streamlit and FastAPI Services Locally
 
 Initialize Poetry
 ```
@@ -347,13 +344,10 @@ Run the FastAPI backend
 uvicorn FastAPI_Services.main:app --reload
 ```
 ---
-# Running Using Docker Containers
-From the root directory, build and start the Docker containers to run the Streamlit and FastAPI services Locally
+# Running Streamlit and FastAPI Services Using Docker Containers Locally
+From the root directory, build and start the Docker containers
 ```
 docker compose build --no-cache
 docker compose up
 ```
 ---
-
-
-
