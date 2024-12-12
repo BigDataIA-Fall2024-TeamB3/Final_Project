@@ -3,140 +3,73 @@ from utils import search_jobs, save_job
 
 st.set_page_config(page_title="Job Search", layout="centered")
 
-# CSS for styling with theme-aware design
+# CSS for styling with all black text
 hide_streamlit_style = """
 <style>
 #MainMenu {visibility: hidden;}
 footer {visibility: hidden;}
 
 body {
+    background-color: #F9F9F9;
     font-family: "Helvetica Neue", Arial, sans-serif;
     margin: 0;
     padding: 0;
+    color: #000000; /* Black text everywhere */
 }
 
-/* Light mode styles */
-@media (prefers-color-scheme: light) {
-    body {
-        background-color: #F9F9F9;
-        color: #000000;
-    }
-    section.main > div {
-        background: #FFFFFF;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .job-card {
-        background: #FAFAFA;
-        border: 1px solid #D1D5DB;
-        color: #000000;
-    }
-    .job-card h3 {
-        color: #000000;
-    }
-    .job-details-card {
-        background: #FAFAFA;
-    }
-    .job-details-label {
-        color: #000000;
-    }
-    .job-details-value {
-        color: #333333;
-    }
-    .stButton button {
-        background: #2563EB;
-        color: #FFFFFF !important;
-    }
-    .stButton button:hover {
-        background: #1E40AF;
-    }
-    # input, textarea {
-    #     color: #000000 !important;
-    # }
-}
-
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #000000;
-        color: #FFFFFF;
-    }
-    section.main > div {
-        background: #1E1E1E;
-        box-shadow: 0 2px 10px rgba(255,255,255,0.1);
-    }
-    .job-card {
-        background: #2A2A2A;
-        border: 1px solid #555555;
-        color: #FFFFFF;
-    }
-    .job-card h3 {
-        color: #FFFFFF;
-    }
-    .job-details-card {
-        background: #2A2A2A;
-    }
-    .job-details-label {
-        color: #FFFFFF;
-    }
-    .job-details-value {
-        color: #DDDDDD;
-    }
-    .stButton button {
-        background: #2563EB;
-        color: #FFFFFF !important;
-        border: none;
-    }
-    .stButton button:hover {
-        background: #1E40AF;
-    }
-    # input, textarea {
-    #     color: #FFFFFF !important;
-    #     background: #333333 !important;
-    #     border: 1px solid #555555 !important;
-    # }
-}
-
-/* Common Styles (applied in both modes) */
+/* Container styling */
 section.main > div {
-    padding: 2rem;
+    background: #FFFFFF;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     border-radius: 10px;
+    padding: 2rem;
     margin-top: 2rem;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
 }
 
+/* Titles and headings */
 h1, h2, h3, h4 {
     font-weight: 600;
-    margin-bottom: 1rem;
     text-align: center;
+    margin-bottom: 1rem;
+    color: 000000;
 }
 
+/* Job card styling */
 .job-card {
-    padding: 1rem;
-    min-height: 150px;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+    background: #FAFAFA;
+    border: 1px solid #D1D5DB;
     border-radius: 8px;
+    padding: 1rem;
     margin-bottom: 1rem;
+    color: #000000;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.05);
     transition: box-shadow 0.3s ease;
 }
-
 .job-card:hover {
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
-
+.job-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
 .job-card p {
     margin: 0 0 0.3rem;
     font-size: 0.9rem;
 }
 
+/* Job details card */
 .job-details-card {
-    padding: 1.5rem;
+    background: #FAFAFA;
+    border: 1px solid #D1D5DB;
     border-radius: 8px;
+    padding: 1.5rem;
     box-shadow: 0 1px 5px rgba(0,0,0,0.05);
     margin-bottom: 1.5rem;
+    color: #000000;
 }
 
 .job-details-row {
@@ -152,33 +85,54 @@ h1, h2, h3, h4 {
 
 .job-details-label {
     font-weight: 600;
-    margin-right: 0.5rem;
     display: inline-block;
     margin-bottom: 0.2rem;
+    color: 000000;
+    font-size: 0.95rem;
 }
 
 .job-details-value {
-    margin-bottom: 1rem;
     display: block;
+    margin-bottom: 1rem;
     word-wrap: break-word;
     font-size: 0.95rem;
+    color: 000000;
 }
 
+/* Buttons */
 .stButton button {
-    border-radius: 6px;
-    padding: 0.75rem 1.25rem;
-    font-size: 0.95rem;
-    margin-top: 0.5rem;
-    transition: background 0.3s;
+    background: #2563EB;
+    color: #FFFFFF !important;
 }
 
+.stButton button:hover {
+    background: #1E40AF;
+    cursor: pointer;
+}
+
+/* Inputs */
+textarea, input {
+    border: 1px solid #D1D5DB !important;
+    border-radius: 6px !important;
+}
+
+/* Separator */
 hr {
     border: none;
     border-top: 1px solid #E5E7EB;
     margin: 2rem 0;
 }
+
+/* Footer */
+.footer {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-top: 2rem;
+    color: #000000;
+}
 </style>
 """
+
 st.markdown(hide_streamlit_style, unsafe_allow_html=True)
 
 # Initialize session state variables
@@ -195,7 +149,7 @@ if st.session_state['access_token'] is None:
     st.stop()
 
 st.title("Job Search")
-
+st.markdown("---")
 # Explanation for the Job Search page
 st.write(
     """
