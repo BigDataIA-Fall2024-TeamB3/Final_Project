@@ -38,30 +38,30 @@ body {
 #     }
 # }
 
-# /* Dark mode */
-# @media (prefers-color-scheme: dark) {
-#     body {
-#         background: #000000;
-#         color: #FFFFFF;
-#     }
-#     section.main > div {
-#         background: #111111;
-#         box-shadow: 0 4px 20px rgba(255,255,255,0.1);
-#     }
-#     input, .css-1cpxqw2 {
-#         color: #FFFFFF !important;
-#         border-color: #555 !important;
-#         background: #222222 !important;
-#     }
-#     .stButton button {
-#         background: #2563EB;
-#         color: #FFFFFF !important;
-#         border: none;
-#     }
-#     .stButton button:hover {
-#         background: #1E40AF;
-#     }
-# }
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+    # body {
+    #     background: #000000;
+    #     color: #FFFFFF;
+    # }
+    # section.main > div {
+    #     background: #111111;
+    #     box-shadow: 0 4px 20px rgba(255,255,255,0.1);
+    # }
+    # input, .css-1cpxqw2 {
+    #     color: #FFFFFF !important;
+    #     border-color: #555 !important;
+    #     background: #222222 !important;
+    # }
+    .stButton button {
+        background: #2563EB;
+        color: #FFFFFF !important;
+        border: none;
+    }
+    .stButton button:hover {
+        background: #1E40AF;
+    }
+}
 
 /* Hide default Streamlit menu and footer */
 #MainMenu {visibility: hidden;}
