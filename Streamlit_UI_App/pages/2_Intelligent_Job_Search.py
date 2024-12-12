@@ -113,7 +113,7 @@ h1, h2, h3, h4 {
 /* Inputs */
 textarea, input {
     border: 1px solid #D1D5DB !important;
-    border-radius: 6px !important;
+    border-radius: 10px !important;
 }
 
 /* Separator */
@@ -176,6 +176,7 @@ def logout():
 
 # Functions to display content
 def show_job_list(jobs):
+    st.markdown("---")
     st.write(f"Found {len(jobs)} job(s).")
     for i, job in enumerate(jobs):
         title = job.get('TITLE', 'No Title')
@@ -195,6 +196,7 @@ def show_job_list(jobs):
         st.button("View Details", key=f"view_details_{i}", on_click=select_job, args=(i,))
 
 def show_job_details(job):
+    st.markdown("---")
     st.markdown(f"<h2>{job.get('TITLE', 'No Title')}</h2>", unsafe_allow_html=True)
 
     # Job details
