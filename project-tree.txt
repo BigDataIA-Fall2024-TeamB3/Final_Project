@@ -1,0 +1,73 @@
+.
+├── Airflow
+│   ├── dags
+│   │   ├── jobs_data_dag.py
+│   │   ├── multijob_transformed.py
+│   │   └── upload_table.py
+│   ├── docker-compose.yaml
+│   ├── dockerfile
+│   ├── poetry.lock
+│   └── pyproject.toml
+├── FastAPI_Services
+│   ├── Dockerfile
+│   ├── __pycache__
+│   │   └── main.cpython-312.pyc
+│   └── main.py
+├── LICENSE
+├── PoC
+│   ├── DataAcq_PoC.ipynb
+│   ├── jobserp.py
+│   ├── jobserp_multijob.py
+│   ├── jobserp_multijob_dated.py
+│   ├── software_engineer_jobs.csv
+│   ├── software_engineer_jobs.json
+│   ├── sql_agent.ipynb
+│   ├── sql_agent_poc.ipynb
+│   ├── tech_jobs.csv
+│   └── tech_jobs.json
+├── README.md
+├── Streamlit_UI_App
+│   ├── Dockerfile
+│   ├── Home.py
+│   ├── __pycache__
+│   │   └── utils.cpython-312.pyc
+│   ├── pages
+│   │   ├── 1_Login_Signup.py
+│   │   ├── 2_Intelligent_Job_Search.py
+│   │   ├── 3_Saved_Jobs.py
+│   │   ├── 4_Application_Materials.py
+│   │   └── 5_Analytics.py
+│   └── utils.py
+├── diagrams
+│   ├── Agents_diag.py
+│   ├── Final_proj_diag.py
+│   ├── airflow_icon.png
+│   ├── arxiv_icon.png
+│   ├── cfa_icon.png
+│   ├── docker_icon.png
+│   ├── docling_ico.png
+│   ├── docling_icon.png
+│   ├── fastapi_icon.png
+│   ├── google_jobs_icon.png
+│   ├── google_search_icon.jpg
+│   ├── job_assistant_architecture.png
+│   ├── langgraph_icon.png
+│   ├── openai_icon.png
+│   ├── pinecone_icon.png
+│   ├── rag_icon.png
+│   ├── selenium_icon.png
+│   ├── serp_icon.png
+│   ├── snowflake_icon.png
+│   ├── streamlit_icon.png
+│   └── updated_research_assistant_system.png
+├── docker-compose.yml
+├── poetry.lock
+├── project-tree.txt
+├── pyproject.toml
+└── tests
+    ├── __init__.py
+    ├── pytest.ini
+    ├── test_integration.py
+    └── test_unit.py
+
+11 directories, 60 files
