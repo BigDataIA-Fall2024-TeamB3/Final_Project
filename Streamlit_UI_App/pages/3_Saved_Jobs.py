@@ -34,7 +34,7 @@ h1, h2, h3, h4 {
     font-weight: 600;
     text-align: center;
     margin-bottom: 1rem;
-    color: #000000;
+    color: 000000;
 }
 
 /* Job card styling */
