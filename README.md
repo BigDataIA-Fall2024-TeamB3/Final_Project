@@ -301,6 +301,11 @@ AWS_ACCESS_KEY_ID=<your_aws_access_key>
 AWS_SECRET_ACCESS_KEY=<your_aws_secret_access_key>
 AWS_REGION=<your_aws_region>
 AWS_S3_BUCKET_NAME=<your_s3_bucket_name>
+
+# JWT Authentication
+SECRET_KEY=<secret_key_for_jwt>
+ALGORITHM=<alogorithm_type>
+ACCESS_TOKEN_EXPIRE_MINUTES=<time>
 ```
 
 ---
