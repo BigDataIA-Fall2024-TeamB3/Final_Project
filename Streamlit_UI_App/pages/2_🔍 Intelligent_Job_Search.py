@@ -142,6 +142,8 @@ if 'selected_search_job_index' not in st.session_state:
     st.session_state['selected_search_job_index'] = None
 if 'search_results' not in st.session_state:
     st.session_state['search_results'] = []
+if 'search_performed' not in st.session_state:
+    st.session_state['search_performed'] = False
 
 # Ensure user is logged in
 if st.session_state['access_token'] is None:
@@ -173,6 +175,7 @@ def logout():
     st.session_state['selected_search_job_index'] = None
     if 'selected_saved_job_index' in st.session_state:
         st.session_state['selected_saved_job_index'] = None
+    st.session_state['search_performed'] = False
 
 # Functions to display content
 def show_job_list(jobs):
@@ -252,6 +255,7 @@ search_query = st.text_input("Enter job search query")
 search_button = st.button("Search", key="search_button")
 
 if search_button and search_query:
+    st.session_state['search_performed'] = True
     with st.spinner("Searching for jobs..."):
         response = search_jobs(search_query, st.session_state['access_token'])
         if response.status_code == 200:
@@ -276,6 +280,9 @@ if st.session_state['selected_search_job_index'] is not None:
 else:
     if st.session_state['search_results']:
         show_job_list(st.session_state['search_results'])
+    elif st.session_state['search_performed']:  # Show only if search was performed
+        st.markdown("---")
+        st.warning("No jobs found for your search query. Please try a different query.")
 
 st.markdown("---")
 st.button("Logout", on_click=logout, key="logout_button")

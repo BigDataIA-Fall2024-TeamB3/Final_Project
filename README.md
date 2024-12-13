@@ -197,6 +197,7 @@ graph TD
 # Project Tree
 ```
 ├── Airflow
+│   ├── config
 │   ├── dags
 │   │   ├── jobs_data_dag.py
 │   │   ├── multijob_transformed.py
@@ -207,8 +208,6 @@ graph TD
 │   └── pyproject.toml
 ├── FastAPI_Services
 │   ├── Dockerfile
-│   ├── __pycache__
-│   │   └── main.cpython-312.pyc
 │   └── main.py
 ├── LICENSE
 ├── PoC
@@ -226,14 +225,13 @@ graph TD
 ├── Streamlit_UI_App
 │   ├── Dockerfile
 │   ├── Home.py
-│   ├── __pycache__
-│   │   └── utils.cpython-312.pyc
 │   ├── pages
-│   │   ├── 1_Login_Signup.py
-│   │   ├── 2_Intelligent_Job_Search.py
-│   │   ├── 3_Saved_Jobs.py
-│   │   ├── 4_Application_Materials.py
-│   │   └── 5_Analytics.py
+│   │   ├── 1_🔑Login_Signup.py
+│   │   ├── 2_🔍 Intelligent_Job_Search.py
+│   │   ├── 3_📂Saved_Jobs.py
+│   │   ├── 4_📄Application_Materials.py
+│   │   ├── 5_📊User_Analytics.py
+│   │   └── 6_📋Job_Listings_Analytics.py
 │   └── utils.py
 ├── diagrams
 │   ├── Agents_diag.py
@@ -247,6 +245,7 @@ graph TD
 │   ├── fastapi_icon.png
 │   ├── google_jobs_icon.png
 │   ├── google_search_icon.jpg
+│   ├── intelligent_job_search_assistant_architecture.png
 │   ├── job_assistant_architecture.png
 │   ├── langgraph_icon.png
 │   ├── openai_icon.png
