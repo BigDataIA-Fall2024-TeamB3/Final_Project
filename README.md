@@ -71,7 +71,7 @@ The project leverages a multi-layered architecture with the following technologi
 - **Analytics**: Descriptive and visual insights using integrated modules.
 - **Deployment**: Dockerized application with CI/CD via GitHub Actions and hosting on GCloud VM.
 
-![Architecture Diagram](diagrams/job_assistant_architecture.png)  
+![Architecture Diagram](diagrams/intelligent_job_search_assistant_architecture.png)  
 
 ---
 
