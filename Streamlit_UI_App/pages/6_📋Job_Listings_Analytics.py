@@ -156,7 +156,13 @@ if job_listings:
         salary_keywords = df["DESCRIPTION"].str.extract(r"(\$[\d,]+)").dropna()
         if not salary_keywords.empty:
             st.write(f"Found {len(salary_keywords)} salary mentions in job descriptions.")
-            st.write(salary_keywords[0].value_counts().head(10))
+            salary_table = pd.DataFrame({
+                "Job Title": df.loc[salary_keywords.index, "TITLE"],
+                "Company": df.loc[salary_keywords.index, "COMPANY"],
+                "Location": df.loc[salary_keywords.index, "LOCATION"],
+                "Salary": salary_keywords[0]
+            })
+            st.write(salary_table)
         else:
             st.write("No salary information found.")
 
