@@ -1129,3 +1129,76 @@ async def save_feedback(
             cur.close()
         if "conn" in locals() and conn:
             conn.close()
+
+# Snowflake connection function
+def get_snowflake_joblistings_connection():
+    try:
+        return connect(
+            user = os.getenv("SNOWFLAKE_USER"),
+            password = os.getenv("SNOWFLAKE_PASSWORD"),
+            account = os.getenv("SNOWFLAKE_ACCOUNT"),
+            database = os.getenv("SNOWFLAKE_JOBSDB"),
+            schema = os.getenv("SNOWFLAKE_SCHEMA"),
+            warehouse = os.getenv("SNOWFLAKE_WAREHOUSE"),
+        )
+    except ProgrammingError as e:
+        raise HTTPException(status_code=500, detail=f"Snowflake connection error: {e}")
+ 
+@app.get("/jobs/listings", response_model=list)
+async def get_job_listings(current_user: UserOut = Depends(get_current_user)):
+    """
+    Fetch all job listings for authenticated users.
+    """
+    try:
+        # Establish Snowflake connection
+        conn = get_snowflake_joblistings_connection()
+        cur = conn.cursor()
+
+        # Query to fetch all job listings
+        fetch_listings_query = "SELECT * FROM JOBLISTINGS;"
+        cur.execute(fetch_listings_query)
+        columns = [col[0] for col in cur.description]  # Get column names
+        rows = cur.fetchall()
+
+        # Format results as a list of dictionaries
+        job_listings = [dict(zip(columns, row)) for row in rows]
+
+        return job_listings
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching job listings: {e}")
+    finally:
+        if "cur" in locals() and cur:
+            cur.close()
+        if "conn" in locals() and conn:
+            conn.close()
+
+@app.get("/users/jobs", response_model=list)
+async def get_user_jobs(current_user: UserOut = Depends(get_current_user)):
+    """
+    Fetch the entire table of saved jobs for the logged-in user.
+    """
+    try:
+        conn = get_user_results_db_connection()
+        cur = conn.cursor()
+
+        # Dynamically create the user-specific table name
+        table_name = f"user_{str(current_user.id).replace('-', '_')}"
+
+        # Query all rows from the user's table
+        fetch_query = f"SELECT * FROM {table_name};"
+        cur.execute(fetch_query)
+        rows = cur.fetchall()
+        columns = [col[0] for col in cur.description]
+
+        # Convert rows to a list of dictionaries
+        jobs = [dict(zip(columns, row)) for row in rows]
+
+        return jobs
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error fetching user jobs: {str(e)}")
+    finally:
+        if "cur" in locals() and cur:
+            cur.close()
+        if "conn" in locals() and conn:
+            conn.close()

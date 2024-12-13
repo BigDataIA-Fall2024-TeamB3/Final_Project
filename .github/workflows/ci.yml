@@ -33,7 +33,7 @@ jobs:
     - name: Set Up Python Environment
       uses: actions/setup-python@v4
       with:
-        python-version: '3.12'
+        python-version: '3.12.7'
 
     # Step 3: Install Project Dependencies
     - name: Install Project Dependencies
