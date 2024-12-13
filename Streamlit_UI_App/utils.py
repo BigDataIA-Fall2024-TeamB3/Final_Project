@@ -106,3 +106,22 @@ def save_feedback(job_id, feedback, token):
     data = {"job_id": job_id, "feedback": feedback}
     response = requests.post(url, headers=headers, json=data)
     return response
+
+def get_job_listings(token):
+    url = f"{API_BASE_URL}/jobs/listings"
+    headers = {"Authorization": f"Bearer {token}"}
+    response = requests.get(url, headers=headers)
+    return response
+
+def fetch_user_jobs(token):
+    url = f"{API_BASE_URL}/users/jobs"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    try:
+        response = requests.get(url, headers=headers)
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise Exception(f"Failed to fetch jobs: {response.json().get('detail', 'Unknown error')}")
+    except Exception as e:
+        raise Exception(f"Error fetching jobs: {str(e)}")
