@@ -19,7 +19,7 @@ def update_snowflake_from_csv(csv_file='tech_jobs.csv'):
         snowflake_password = os.getenv('SNOWFLAKE_PASSWORD')
         snowflake_account = os.getenv('SNOWFLAKE_ACCOUNT')
         snowflake_warehouse = os.getenv('SNOWFLAKE_WAREHOUSE')
-        snowflake_database = os.getenv('SNOWFLAKE_JOBS_DATABASE')
+        snowflake_database = os.getenv('SNOWFLAKE_JOBSDB')
         snowflake_schema = os.getenv('SNOWFLAKE_SCHEMA')
         #snowflake_role = os.getenv('SNOWFLAKE_ROLE')
         snowflake_role = 'ACCOUNTADMIN'
@@ -27,7 +27,7 @@ def update_snowflake_from_csv(csv_file='tech_jobs.csv'):
         # Verify all required environment variables are present
         required_vars = [
             'SNOWFLAKE_USER', 'SNOWFLAKE_PASSWORD', 'SNOWFLAKE_ACCOUNT',
-            'SNOWFLAKE_WAREHOUSE', 'SNOWFLAKE_JOBS_DATABASE', 'SNOWFLAKE_SCHEMA'
+            'SNOWFLAKE_WAREHOUSE', 'SNOWFLAKE_JOBSDB', 'SNOWFLAKE_SCHEMA'
             #,'SNOWFLAKE_ROLE'
         ]
         
@@ -101,7 +101,7 @@ def update_snowflake_from_csv(csv_file='tech_jobs.csv'):
             # First, delete all existing data
             print("Deleting existing data from Snowflake table...")
             #delete_query = f"DELETE FROM {snowflake_database}.{snowflake_schema}.TESTJOBSDB"
-            delete_query = f"DELETE FROM {snowflake_database}.{snowflake_schema}.JOBLISTINGS"
+            delete_query = "DELETE FROM JOBLISTINGS;"
             cursor.execute(delete_query)
             
             # Get count of deleted rows

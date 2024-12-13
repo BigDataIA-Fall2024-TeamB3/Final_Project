@@ -29,8 +29,11 @@ Contribution:
 ## Links
 1. **Application URL**: http://viswanath.me:8501/
 2. **Backend Service Link**: http://viswanath.me:8000/docs
-3. **Proposal Codelabs Report**: [View Report](https://codelabs-preview.appspot.com/?file_id=1JGeUAieHgwrS8Kxsetu1_HHAeJsj8REv8EMC-kxBqW0#0)
-4. **Proposal Video**: [Watch Video](https://drive.google.com/drive/folders/1DHzRlApDj-2Uo6RVT5viC4lYyjXmdB3s?usp=sharing)
+3. **Final Codelabs Report**: [View Report](https://codelabs-preview.appspot.com/?file_id=1M37nENvgtKTGsCYfi8TnebYeSrfNwSMdzXxU_mIjOBg#0)
+4. **Application Demo**: [Watch Video](https://drive.google.com/drive/folders/1jAFPlM8YFPhveZ6IiSmsVj5E1-U6Bg3H?usp=sharing)
+5. **Proposal Codelabs Report**: [View Report](https://codelabs-preview.appspot.com/?file_id=1JGeUAieHgwrS8Kxsetu1_HHAeJsj8REv8EMC-kxBqW0#0)
+6. **Proposal Video**: [Watch Video](https://drive.google.com/drive/folders/1DHzRlApDj-2Uo6RVT5viC4lYyjXmdB3s?usp=sharing)
+
 ---
 # Introduction
 

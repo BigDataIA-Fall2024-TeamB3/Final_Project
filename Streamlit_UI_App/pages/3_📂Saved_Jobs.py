@@ -284,7 +284,7 @@ else:
             )
 
             # User can choose document type
-            document_type = st.selectbox("Select Document", ["Resume", "Cover Letter"])
+            document_type = st.selectbox("Select Document", ["Resume", "Cover_Letter"])
             question = st.text_area("Ask a specific question")
 
             if st.button("Get Specific Feedback"):

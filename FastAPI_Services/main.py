@@ -544,6 +544,17 @@ def parse_natural_query(state: AgentState) -> AgentState:
             }}
         }}
 
+        If the query does not mention a specific role, job, title, company, or location explicitly (e.g., "give me jobs"), 
+        or is irrelevant, return:
+        {{
+            'role': [], 
+            'company': [], 
+            'location': [], 
+            'title': [], 
+            'description': [], 
+            'posted_date': []
+        }}.
+
         Return a valid Python dictionary where:
         - Keys are column names from the schema map.
         - Values are lists of terms to search for, including synonyms.
@@ -551,6 +562,7 @@ def parse_natural_query(state: AgentState) -> AgentState:
         Example: {{'column_name': ['value1', 'value2']}}"""),
         ("user", "Parse this job search query: {natural_query}")
     ])
+
     
     chain = parser_prompt | llm
     response = chain.invoke({
@@ -1001,8 +1013,30 @@ async def generate_feedback(
                 Candidate's Cover Letter:
                 {cover_letter_text}
 
-                Provide detailed feedback on how the resume and cover letter align with the job description and highlights.
-                Suggest improvements for better alignment.
+                Instructions:
+                - Validate the document type before providing feedback:
+                    - If the content is not a resume or cover letter, respond with: "The provided content is not relevant for resume or cover letter feedback. Please provide relevant documents."
+                - Provide detailed feedback on the resume and cover letter separately if valid:
+                    - For the resume:
+                        - Assess how well it aligns with the job description and highlights.
+                        Example: "The resume lists project management experience, which aligns well with the job requirement for managing cross-functional teams. However, it lacks specific details about the size or scope of projects managed. Include quantifiable metrics like team size or budget managed to strengthen alignment."
+                        - Provide specific suggestions for improvement, such as tailoring skills, optimizing keywords, or restructuring sections for clarity.
+                        Example: "The 'Skills' section could include keywords directly from the job description, such as 'Agile methodology' or 'data-driven decision making.'"
+                        - Highlight any missing sections or areas for enhancement (e.g., education, work experience, or technical skills).
+                        Example: "The resume does not include a 'Technical Skills' section, which is crucial for this role. Add a section highlighting your proficiency with tools like Jira, Tableau, or SQL."
+                        - Provide a relevance score (0-100) indicating how well the resume matches the job requirements.
+                        Example: "Relevance Score: 85/100. The resume aligns well overall but could benefit from more tailored keywords and quantifiable achievements."
+                    - For the cover letter:
+                        - Evaluate its tone, structure, and alignment with the job description and highlights.
+                        Example: "The tone of the cover letter is professional but lacks enthusiasm for the specific role. Adding a sentence about why you are excited about this company's mission would improve it."
+                        - Suggest ways to make the cover letter more compelling and tailored, such as emphasizing achievements or customizing the tone to the company culture.
+                        Example: "Mention your success in reducing project timelines by 20% in your last role to demonstrate your ability to meet the job's emphasis on efficiency."
+                        - Highlight areas where it lacks personalization or fails to address key job requirements.
+                        Example: "The cover letter is generic and does not mention the company's recent product launch, which is a key highlight. Include a sentence demonstrating your knowledge of this and how your skills can contribute to its success."
+                    - If either the resume or cover letter has insufficient content or is overly generic, provide constructive feedback to address this.
+                        Example: "The resume provides only a list of job titles without describing responsibilities or achievements. Include bullet points that explain your impact in each role."
+
+                Focus on actionable feedback that helps the candidate improve alignment with the job.
             """),
         ])
 
@@ -1055,8 +1089,6 @@ async def chat_feedback(
             "document_text": document_text,
             "question": question,
         }
-
-        # Prompt template
         prompt_template = ChatPromptTemplate.from_messages([
             ("system", "You are a career coach specializing in job applications."),
             ("user", """
@@ -1072,7 +1104,25 @@ async def chat_feedback(
                 Question:
                 {question}
 
-                Provide a detailed response to the question based on the document content and job information.
+                Instructions:
+                - If the document content is a resume:
+                    - Provide detailed suggestions and improvements based on the alignment with the job description and highlights.
+                    - Highlight specific areas that can be improved, such as tailoring skills, optimizing keywords, or structuring the resume for clarity and relevance.
+                    - Provide a relevance score (0-100) indicating how well the resume matches the job requirements, based on factors like skills, experience, and alignment with job highlights.
+                - If the document content is a cover letter:
+                    - Provide detailed suggestions and improvements based on how well it aligns with the job description and highlights.
+                    - Suggest ways to make the cover letter more compelling and tailored, such as emphasizing achievements or aligning the tone with the company culture.
+                - If the document content is irrelevant (not a resume or cover letter):
+                    - Respond with: "The provided content is not relevant for resume or cover letter feedback. Please provide relevant documents."
+                - If the user asks anything irrelevant (not related to job applications, resumes, or cover letters):
+                    - Respond with: "The question is not related to job applications, resumes, or cover letters. I can only assist with these topics."
+                - Address edge cases such as:
+                    - Missing key sections in the resume (e.g., education, work experience).
+                    - Overly generic cover letters that lack customization.
+                    - Documents with insufficient content for evaluation.
+                - Focus feedback specifically on how the document content can better align with the job requirements and make a stronger impact.
+
+                Provide your response accordingly.
             """),
         ])
 
